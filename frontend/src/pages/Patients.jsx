@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { Search, UserPlus, ChevronRight, Edit2, Trash2, Filter, ChevronLeft, ArrowUp, ArrowDown } from 'lucide-react';
 import { useForm } from 'react-hook-form';
-import toast from 'react-hot-toast';
+import { toastSuccess, toastError } from '../utils/toastAlert';
 import api from '../lib/axios';
 import Modal from '../components/ui/Modal';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -75,35 +75,36 @@ const Patients = () => {
     mutationFn: (newPatient) => api.post('/patients', newPatient),
     onSuccess: () => {
       queryClient.invalidateQueries(['patients']);
-      toast.success('Patient added successfully!');
+      toastSuccess('Patient added successfully!');
       setIsAddModalOpen(false);
       reset();
     },
-    onError: () => toast.error('Failed to add patient')
+    onError: () => toastError('Failed to add patient')
   });
 
   const editMutation = useMutation({
     mutationFn: ({ id, data }) => api.put(`/patients/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries(['patients']);
-      toast.success('Patient updated successfully!');
+      toastSuccess('Patient updated successfully!');
       setEditPatient(null);
     },
-    onError: () => toast.error('Failed to update patient')
+    onError: () => toastError('Failed to update patient')
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id) => api.delete(`/patients/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries(['patients']);
-      toast.success('Patient deleted successfully!');
+      toastSuccess('Patient deleted successfully!');
       setDeletePatientId(null);
     },
-    onError: () => toast.error('Failed to delete patient')
+    onError: () => toastError('Failed to delete patient')
   });
 
   const onSubmitAdd = (data) => {
-    const address = data.detailAddress ? `${data.padukuhan}, ${data.detailAddress}` : data.padukuhan;
+    const padukuhan = user?.role === 'HEALTH_WORKER' ? user?.pedukuhanName : data.padukuhan;
+    const address = data.detailAddress ? `${padukuhan}, ${data.detailAddress}` : padukuhan;
     const submitData = { ...data, address, age: parseInt(data.age) };
     delete submitData.padukuhan;
     delete submitData.detailAddress;
@@ -111,7 +112,8 @@ const Patients = () => {
   };
 
   const onSubmitEdit = (data) => {
-    const address = data.detailAddress ? `${data.padukuhan}, ${data.detailAddress}` : data.padukuhan;
+    const padukuhan = user?.role === 'HEALTH_WORKER' ? user?.pedukuhanName : data.padukuhan;
+    const address = data.detailAddress ? `${padukuhan}, ${data.detailAddress}` : padukuhan;
     const submitData = { ...data, address, age: parseInt(data.age) };
     delete submitData.padukuhan;
     delete submitData.detailAddress;
@@ -137,7 +139,7 @@ const Patients = () => {
       name: patient.name,
       age: patient.age,
       gender: patient.gender,
-      padukuhan: matchedPadukuhan,
+      padukuhan: user?.role === 'HEALTH_WORKER' ? user?.pedukuhanName : matchedPadukuhan,
       detailAddress: detailAddress,
       phone: patient.phone || ''
     });
@@ -165,7 +167,12 @@ const Patients = () => {
           <p className="text-[13px] text-slate-500 mt-1">Kelola dan pantau pasien yang terdaftar.</p>
         </div>
         <button 
-          onClick={() => setIsAddModalOpen(true)}
+          onClick={() => {
+            reset({
+              padukuhan: user?.role === 'HEALTH_WORKER' ? user?.pedukuhanName : ''
+            });
+            setIsAddModalOpen(true);
+          }}
           className="flex items-center px-4 py-2 bg-rose-600 text-white text-[13px] font-medium rounded-lg hover:bg-rose-700 transition-colors shadow-sm outline-none"
         >
           <UserPlus className="w-4 h-4 mr-2" />
@@ -328,7 +335,7 @@ const Patients = () => {
           </div>
           <Input label="Nomor Telepon" {...register("phone")} placeholder="Opsional" />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Select label="Padukuhan" options={padukuhanOptions} {...register("padukuhan", { required: true })} />
+            <Select label="Padukuhan" options={padukuhanOptions} {...register("padukuhan", { required: user?.role !== 'HEALTH_WORKER' })} disabled={user?.role === 'HEALTH_WORKER'} />
             <Input label="Detail Alamat" {...register("detailAddress")} placeholder="RT/RW, Jalan (Opsional)" />
           </div>
           <div className="flex justify-end pt-5 mt-2 border-t border-slate-100">
@@ -351,7 +358,7 @@ const Patients = () => {
           </div>
           <Input label="Nomor Telepon" {...registerEdit("phone")} />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Select label="Padukuhan" options={padukuhanOptions} {...registerEdit("padukuhan", { required: true })} />
+            <Select label="Padukuhan" options={padukuhanOptions} {...registerEdit("padukuhan", { required: user?.role !== 'HEALTH_WORKER' })} disabled={user?.role === 'HEALTH_WORKER'} />
             <Input label="Detail Alamat" {...registerEdit("detailAddress")} placeholder="RT/RW, Jalan (Opsional)" />
           </div>
           <div className="flex justify-end pt-5 mt-2 border-t border-slate-100">

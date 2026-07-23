@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { Toaster } from 'react-hot-toast';
+import { ThemeProvider } from './context/ThemeContext';
 
 import Login from './pages/Login';
 import DashboardLayout from './components/layout/DashboardLayout';
@@ -57,7 +57,6 @@ function AppRoutes() {
         <Route path="patients/:id" element={<PatientDetail />} />
         <Route path="records" element={<Records />} />
         <Route path="reports" element={<Reports />} />
-        <Route path="import" element={<ImportData />} />
       </Route>
 
       {/* Kepala Desa Routes */}
@@ -75,12 +74,13 @@ function AppRoutes() {
 
 function App() {
   return (
-    <AuthProvider>
-      <Toaster position="top-right" />
-      <BrowserRouter>
-        <AppRoutes />
-      </BrowserRouter>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 

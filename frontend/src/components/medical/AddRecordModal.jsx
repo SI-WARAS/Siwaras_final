@@ -2,9 +2,14 @@ import { useForm } from 'react-hook-form';
 import Modal from '../ui/Modal';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
+import { getNowForDatetimeInput } from '../../utils/dateUtils';
 
 const AddRecordModal = ({ isOpen, onClose, onAdd, isPending }) => {
-  const { register, handleSubmit, reset } = useForm();
+  const { register, handleSubmit, reset } = useForm({
+    defaultValues: {
+      date: getNowForDatetimeInput(),
+    }
+  });
 
   const onSubmit = (data) => {
     onAdd(data, reset);
@@ -23,29 +28,34 @@ const AddRecordModal = ({ isOpen, onClose, onAdd, isPending }) => {
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Tambah Data Medis">
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <Input
+          label="Tanggal & Waktu Pemeriksaan"
+          type="datetime-local"
+          {...register("date", { required: true })}
+        />
         <div className="grid grid-cols-2 gap-4">
           <Input 
-            label="Tekanan Darah (Mis. 120/80)" 
-            {...register("bloodPressure", { required: true })} 
+            label="Tekanan Darah" 
+            {...register("bloodPressure", { required: true })} placeholder='120/80'
           />
           <Input 
             label="Gula Darah" 
             type="number" 
             step="0.1" 
-            {...register("bloodSugar", { required: true })} 
+            {...register("bloodSugar", { required: true })} placeholder='100'
           />
           <Input 
             label="Kolesterol" 
             type="number" 
             step="0.1" 
-            {...register("cholesterol", { required: true })} 
+            {...register("cholesterol", { required: true })} placeholder='150'
           />
           <Input 
             label="Asam Urat" 
             type="number" 
             step="0.1" 
-            {...register("uricAcid", { required: true })} 
+            {...register("uricAcid", { required: true })} placeholder='2.4 - 6.0'
           />
           <Select 
             label="Tingkat Aktivitas" 
@@ -56,13 +66,13 @@ const AddRecordModal = ({ isOpen, onClose, onAdd, isPending }) => {
             label="Berat (kg)" 
             type="number" 
             step="0.1" 
-            {...register("weight", { required: true })} 
+            {...register("weight", { required: true })} placeholder='60'
           />
           <Input 
             label="Tinggi (cm)" 
             type="number" 
             step="0.1" 
-            {...register("height", { required: true })} 
+            {...register("height", { required: true })} placeholder='160'
           />
           <Select 
             label="Status Merokok" 
@@ -87,6 +97,7 @@ const AddRecordModal = ({ isOpen, onClose, onAdd, isPending }) => {
       </form>
     </Modal>
   );
+
 };
 
 export default AddRecordModal;

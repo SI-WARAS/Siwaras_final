@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\MedicalRecordController;
 use App\Http\Controllers\Api\PatientController;
+use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -52,4 +53,11 @@ Route::middleware('auth:sanctum')->group(function () {
     // Import & Export (dipanggil frontend via /api/medis/import & /api/medis/export)
     Route::post('/medis/import', [MedicalRecordController::class, 'importRecords']);
     Route::post('/medis/export', [MedicalRecordController::class, 'exportRecords']);
+
+    // User Management (ADMIN only)
+    Route::get('/users',         [UserController::class, 'index']);
+    Route::post('/users',        [UserController::class, 'store']);
+    Route::put('/users/{id}',    [UserController::class, 'update']);
+    Route::patch('/users/{id}',  [UserController::class, 'update']);
+    Route::delete('/users/{id}', [UserController::class, 'destroy']);
 });

@@ -98,7 +98,12 @@ export const exportRecordsToPDF = (records) => {
   addReportHeader(doc, 'Laporan Rekam Medis Pasien');
   
   const tableBody = records.map(r => [
-    new Date(r.date).toLocaleDateString('id-ID'),
+    (() => {
+      const raw = r.date;
+      const hasTimezone = /Z|[+-]\d{2}:\d{2}$/.test(raw);
+      const d = new Date(hasTimezone ? raw : raw.replace(' ', 'T'));
+      return d.toLocaleDateString('id-ID', { timeZone: 'Asia/Jakarta' });
+    })(),
     r.patient?.name || 'N/A',
     r.bloodPressure,
     r.bloodSugar,

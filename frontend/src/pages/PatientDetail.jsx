@@ -1,19 +1,19 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import toast from 'react-hot-toast';
+import { toastSuccess, toastError } from '../utils/toastAlert';
 import api from '../lib/axios';
-import { format } from 'date-fns';
 import { ArrowLeft, Plus, Activity, Heart, Scale, Edit2, Trash2, MapPin, Phone, Calendar } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { getBasePath } from '../utils/roleHelpers';
+import { getNowLocalISO, formatDisplayDate } from '../utils/dateUtils';
 
 import AddRecordModal from '../components/medical/AddRecordModal';
 import EditRecordModal from '../components/medical/EditRecordModal';
 import DeleteRecordModal from '../components/medical/DeleteRecordModal';
 
-import { getBPStatus, getBSStatus, getUAStatus } from '../utils/healthLogic';
+import { getBPStatus, getBSStatus, getUAStatus, getCholesterolStatus } from '../utils/healthLogic';
 
 const StatusBadge = ({ status, text }) => {
   const styles = {
@@ -51,7 +51,7 @@ const PatientDetail = () => {
     const activityMap = { LOW: 'rendah', MODERATE: 'sedang', HIGH: 'tinggi' };
     
     return {
-      date: data.date || new Date().toISOString(),
+      date: data.date || getNowLocalISO(),
       blood_pressure: data.bloodPressure,
       blood_sugar: data.bloodSugar ? parseFloat(data.bloodSugar) : null,
       cholesterol: data.cholesterol ? parseFloat(data.cholesterol) : null,
@@ -74,10 +74,10 @@ const PatientDetail = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['patient', id]);
-      toast.success('Rekam medis berhasil ditambahkan!');
+      toastSuccess('Rekam medis berhasil ditambahkan!');
       setIsAddModalOpen(false);
     },
-    onError: () => toast.error('Gagal menambahkan rekam medis')
+    onError: () => toastError('Gagal menambahkan rekam medis')
   });
 
   const editMutation = useMutation({
@@ -87,20 +87,20 @@ const PatientDetail = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['patient', id]);
-      toast.success('Rekam medis berhasil diperbarui!');
+      toastSuccess('Rekam medis berhasil diperbarui!');
       setEditRecord(null);
     },
-    onError: () => toast.error('Gagal memperbarui rekam medis')
+    onError: () => toastError('Gagal memperbarui rekam medis')
   });
 
   const deleteMutation = useMutation({
     mutationFn: (recordId) => api.delete(`/records/${recordId}`),
     onSuccess: () => {
       queryClient.invalidateQueries(['patient', id]);
-      toast.success('Rekam medis berhasil dihapus!');
+      toastSuccess('Rekam medis berhasil dihapus!');
       setDeleteRecordId(null);
     },
-    onError: () => toast.error('Gagal menghapus rekam medis')
+    onError: () => toastError('Gagal menghapus rekam medis')
   });
 
   const handleAdd = (data, resetForm) => {
@@ -169,7 +169,7 @@ const PatientDetail = () => {
               <Calendar className="w-4 h-4 text-slate-400 mt-0.5 mr-3 flex-shrink-0" />
               <div>
                 <p className="text-[11px] text-slate-400 font-medium uppercase tracking-wider mb-0.5">Terdaftar</p>
-                <p className="text-[13px] font-semibold text-slate-800">{format(new Date(patient.createdAt), 'dd MMM yyyy')}</p>
+                <p className="text-[13px] font-semibold text-slate-800">{formatDisplayDate(patient.createdAt, { showTime: false })}</p>
               </div>
             </div>
           </div>
@@ -205,9 +205,9 @@ const PatientDetail = () => {
                         <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center mr-3">
                            <Calendar className="w-4 h-4 text-slate-400" />
                         </div>
-                        {format(new Date(record.date), 'dd MMM yyyy, HH:mm')}
+                        {formatDisplayDate(record.date)}
                       </span>
-                      <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex space-x-1">
                         <button onClick={() => setEditRecord(record)} className="p-2 text-slate-400 hover:text-brand-primary hover:bg-brand-light/30 rounded-lg transition-colors">
                           <Edit2 className="w-4 h-4" />
                         </button>
@@ -242,7 +242,10 @@ const PatientDetail = () => {
                         <div className="flex items-center text-slate-400 mb-1.5 text-[10px] font-bold uppercase tracking-wider">
                           Kolesterol
                         </div>
-                        <span className="font-semibold text-slate-800 text-[15px]">{record.cholesterol}</span>
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold text-slate-800 text-[15px]">{record.cholesterol}</span>
+                          <StatusBadge status={getCholesterolStatus(record.cholesterol)} />
+                        </div>
                       </div>
 
                       <div>

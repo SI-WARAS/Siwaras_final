@@ -20,14 +20,24 @@ class AuthController extends Controller
             'password' => 'required|string',
         ]);
 
-        $user = User::where('username', $request->username)->first();
+        $user = User::with('pedukuhan')->where('username', $request->username)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
             return response()->json(['error' => 'Invalid credentials'], 401);
         }
 
-        // Revoke old tokens (optional: one-session policy)
-        $user->tokens()->delete();
+        // Batasi maksimal 5 perangkat/sesi aktif (multi-login)
+        $maxTokens = 5;
+        if ($user->tokens()->count() >= $maxTokens) {
+            // Sisakan 4 token yang paling baru/terakhir digunakan, hapus sisanya
+            // Sehingga setelah token baru dibuat, total maksimal menjadi 5.
+            $tokensToKeep = $user->tokens()
+                ->orderByDesc('last_used_at')
+                ->take($maxTokens - 1)
+                ->pluck('id');
+
+            $user->tokens()->whereNotIn('id', $tokensToKeep)->delete();
+        }
 
         $token = $user->createToken('siwaras-token')->plainTextToken;
 
@@ -35,11 +45,12 @@ class AuthController extends Controller
             'message' => 'Login successful',
             'token'   => $token,
             'user'    => [
-                'id'          => $user->id,
-                'username'    => $user->username,
-                'name'        => $user->name,
-                'role'        => $user->role,
-                'pedukuhanId' => $user->pedukuhan_id,
+                'id'            => $user->id,
+                'username'      => $user->username,
+                'name'          => $user->name,
+                'role'          => $user->role,
+                'pedukuhanId'   => $user->pedukuhan_id,
+                'pedukuhanName' => $user->pedukuhan ? $user->pedukuhan->name : null,
             ],
         ]);
     }
@@ -49,14 +60,15 @@ class AuthController extends Controller
      */
     public function me(Request $request)
     {
-        $user = $request->user();
+        $user = $request->user()->load('pedukuhan');
         return response()->json([
             'user' => [
-                'id'          => $user->id,
-                'username'    => $user->username,
-                'name'        => $user->name,
-                'role'        => $user->role,
-                'pedukuhanId' => $user->pedukuhan_id,
+                'id'            => $user->id,
+                'username'      => $user->username,
+                'name'          => $user->name,
+                'role'          => $user->role,
+                'pedukuhanId'   => $user->pedukuhan_id,
+                'pedukuhanName' => $user->pedukuhan ? $user->pedukuhan->name : null,
             ],
         ]);
     }

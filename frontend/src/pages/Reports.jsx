@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Download, Settings, Calendar, MapPin, Check } from 'lucide-react';
 import { motion } from 'framer-motion';
-import toast from 'react-hot-toast';
+import { toastSuccess, toastError } from '../utils/toastAlert';
 import api from '../lib/axios';
 import { useAuth } from '../context/AuthContext';
 import * as XLSX from 'xlsx';
@@ -44,7 +44,7 @@ const Reports = () => {
   const [pedukuhans, setPedukuhans] = useState([]);
 
   useEffect(() => {
-    if (user && user.role === 'ADMIN') {
+    if (user && (user.role === 'ADMIN' || user.role === 'VILLAGE_HEAD')) {
       api.get('/patients/pedukuhans')
         .then(res => setPedukuhans(res.data))
         .catch(err => console.error('Gagal memuat daftar pedukuhan', err));
@@ -54,7 +54,7 @@ const Reports = () => {
   const handleFieldToggle = (fieldId) => {
     if (selectedFields.includes(fieldId)) {
       if (selectedFields.length === 1) {
-        toast.error('Pilih minimal satu kolom untuk diekspor!');
+        toastError('Pilih minimal satu kolom untuk diekspor!');
         return;
       }
       setSelectedFields(selectedFields.filter(id => id !== fieldId));
@@ -81,13 +81,13 @@ const Reports = () => {
         filters: {
           startDate: startDate || undefined,
           endDate: endDate || undefined,
-          pedukuhanId: user.role === 'ADMIN' ? (pedukuhanFilter || undefined) : undefined
+          pedukuhanId: (user.role === 'ADMIN' || user.role === 'VILLAGE_HEAD') ? (pedukuhanFilter || undefined) : undefined
         }
       });
 
       const records = response.data;
       if (records.length === 0) {
-        toast.error('Tidak ditemukan rekam medis yang sesuai dengan kriteria filter.');
+        toastError('Tidak ditemukan rekam medis yang sesuai dengan kriteria filter.');
         return;
       }
 
@@ -154,10 +154,10 @@ const Reports = () => {
 
       // Save
       XLSX.writeFile(workbook, `SIWARAS_Custom_Report_${new Date().getTime()}.xlsx`);
-      toast.success('Laporan kustom berhasil diunduh dalam format Excel!');
+      toastSuccess('Laporan kustom berhasil diunduh dalam format Excel!');
     } catch (error) {
       console.error(error);
-      toast.error('Gagal mengunduh laporan kustom.');
+      toastError('Gagal mengunduh laporan kustom.');
     } finally {
       setIsExporting(false);
     }
@@ -211,7 +211,7 @@ const Reports = () => {
               <label className="block text-[13px] font-semibold text-slate-700 mb-2 flex items-center">
                 <MapPin className="w-4 h-4 mr-1.5 text-slate-400" /> Wilayah Pedukuhan
               </label>
-              {user.role === 'ADMIN' ? (
+              {(user.role === 'ADMIN' || user.role === 'VILLAGE_HEAD') ? (
                 <select
                   value={pedukuhanFilter}
                   onChange={(e) => setPedukuhanFilter(e.target.value)}

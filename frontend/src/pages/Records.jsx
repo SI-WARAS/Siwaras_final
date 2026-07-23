@@ -1,13 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { Activity, Heart, Scale, Calendar, ChevronRight } from 'lucide-react';
-import { format } from 'date-fns';
+import { formatDisplayDate } from '../utils/dateUtils';
 import api from '../lib/axios';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { getBasePath } from '../utils/roleHelpers';
 
-import { getBPStatus, getBSStatus, getUAStatus } from '../utils/healthLogic';
+import { getBPStatus, getBSStatus, getUAStatus, getCholesterolStatus } from '../utils/healthLogic';
 
 const StatusBadge = ({ status, text }) => {
   const styles = {
@@ -71,13 +71,13 @@ const Records = () => {
                      <div>
                        <span className="text-[14px] font-bold text-slate-800 mr-2">{record.patient?.name}</span>
                        <span className="text-[12px] font-medium text-slate-400">
-                         {format(new Date(record.date), 'dd MMM yyyy, HH:mm')}
+                         {formatDisplayDate(record.date)}
                        </span>
                      </div>
                    </div>
                    <Link
                      to={`${basePath}/patients/${record.patientId}`}
-                     className="p-2 text-slate-400 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                     className="p-2 text-slate-400 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors"
                      title="Lihat Pasien"
                    >
                      <ChevronRight className="w-4 h-4" />
@@ -109,7 +109,10 @@ const Records = () => {
                      <div className="flex items-center text-slate-400 mb-1.5 text-[10px] font-bold uppercase tracking-wider">
                        Kolesterol
                      </div>
-                     <span className="font-semibold text-slate-800 text-[15px]">{record.cholesterol}</span>
+                     <div className="flex items-center justify-between">
+                       <span className="font-semibold text-slate-800 text-[15px]">{record.cholesterol}</span>
+                       <StatusBadge status={getCholesterolStatus(record.cholesterol)} />
+                     </div>
                    </div>
                     <div>
                       <div className="flex items-center text-slate-400 mb-1.5 text-[10px] font-bold uppercase tracking-wider">

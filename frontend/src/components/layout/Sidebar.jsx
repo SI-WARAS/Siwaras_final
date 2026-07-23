@@ -19,6 +19,9 @@ const Sidebar = () => {
   if (user?.role === 'ADMIN' || user?.role === 'HEALTH_WORKER') {
     navItems.push({ name: 'Pasien', path: `${basePath}/patients`, icon: Users });
     navItems.push({ name: 'Rekam Medis', path: `${basePath}/records`, icon: Activity });
+  }
+
+  if (user?.role === 'ADMIN') {
     navItems.push({ name: 'Import Data', path: `${basePath}/import`, icon: UploadCloud });
   }
 
@@ -35,18 +38,18 @@ const Sidebar = () => {
       <div className="h-20 flex items-center justify-between px-6 border-b border-transparent">
         <div className="flex items-center">
           <img src="/logo.png" alt="Logo" className="w-8 h-8 mr-3 object-contain" />
-          <span className="text-[17px] font-bold text-slate-800 tracking-tight">
+          <span className="text-[17px] font-bold text-slate-800 dark:text-slate-100 tracking-tight">
             SI-WARAS
           </span>
         </div>
         {/* Mobile close button inside sidebar */}
-        <button className="md:hidden text-slate-400 hover:text-slate-600" onClick={toggleSidebar}>
+        <button className="md:hidden text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" onClick={toggleSidebar}>
           <X className="w-5 h-5" />
         </button>
       </div>
 
       <nav className="flex-1 py-4 px-4 space-y-1 overflow-y-auto">
-        <p className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">Menu</p>
+        <p className="px-3 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 ml-1">Menu</p>
         {navItems.map((item) => {
           const isActive = location.pathname.startsWith(item.path);
           const Icon = item.icon;
@@ -57,11 +60,11 @@ const Sidebar = () => {
               onClick={() => setIsOpen(false)}
               className={`flex items-center px-3 py-2.5 rounded-lg transition-all duration-200 ease-in-out group relative text-[13px] ${
                 isActive
-                  ? 'bg-rose-50/50 text-rose-700 font-semibold before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-6 before:w-[3px] before:bg-rose-500 before:rounded-r-full'
-                  : 'text-slate-500 font-medium hover:bg-slate-50 hover:text-slate-800'
+                  ? 'bg-rose-50/50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 font-semibold before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-6 before:w-[3px] before:bg-rose-500 before:rounded-r-full'
+                  : 'text-slate-500 dark:text-slate-400 font-medium hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:text-slate-800 dark:hover:text-slate-200'
               }`}
             >
-              <Icon className={`w-4 h-4 mr-3 transition-colors ${isActive ? 'text-rose-600' : 'text-slate-400 group-hover:text-slate-500'}`} />
+              <Icon className={`w-4 h-4 mr-3 transition-colors ${isActive ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-500 dark:group-hover:text-slate-400'}`} />
               {item.name}
             </Link>
           );
@@ -69,12 +72,12 @@ const Sidebar = () => {
       </nav>
 
       <div className="p-4 flex flex-col gap-2">
-        <div className="pt-2 border-t border-slate-100">
+        <div className="pt-2 border-t border-slate-100 dark:border-slate-700">
           <button
             onClick={logout}
-            className="flex items-center w-full px-3 py-2.5 text-[13px] text-slate-500 hover:bg-rose-50 hover:text-rose-600 rounded-lg transition-colors duration-200 group font-medium"
+            className="flex items-center w-full px-3 py-2.5 text-[13px] text-slate-500 dark:text-slate-400 hover:bg-rose-50 dark:hover:bg-rose-900/30 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg transition-colors duration-200 group font-medium"
           >
-            <LogOut className="w-4 h-4 mr-3 text-slate-400 group-hover:text-rose-500 transition-colors" />
+            <LogOut className="w-4 h-4 mr-3 text-slate-400 dark:text-slate-500 group-hover:text-rose-500 dark:group-hover:text-rose-400 transition-colors" />
             <span>Keluar</span>
           </button>
         </div>
@@ -93,7 +96,7 @@ const Sidebar = () => {
       </button>
 
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex w-[260px] bg-white border-r border-slate-100 h-screen sticky top-0 flex-col z-10">
+      <aside className="hidden md:flex w-[260px] bg-white dark:bg-slate-800 border-r border-slate-100 dark:border-slate-700 h-screen sticky top-0 flex-col z-10 transition-colors duration-300">
         <SidebarContent />
       </aside>
 
@@ -113,7 +116,7 @@ const Sidebar = () => {
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', bounce: 0, duration: 0.3 }}
-              className="md:hidden fixed inset-y-0 left-0 w-[260px] bg-white shadow-2xl flex flex-col z-50"
+              className="md:hidden fixed inset-y-0 left-0 w-[260px] bg-white dark:bg-slate-800 shadow-2xl flex flex-col z-50 transition-colors duration-300"
             >
               <SidebarContent />
             </motion.aside>

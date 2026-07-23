@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import Modal from '../ui/Modal';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
-import { format } from 'date-fns';
+import { formatForDatetimeInput } from '../../utils/dateUtils';
 
 const EditRecordModal = ({ record, onClose, onEdit, isPending }) => {
   const { register, handleSubmit, reset } = useForm();
@@ -11,7 +11,7 @@ const EditRecordModal = ({ record, onClose, onEdit, isPending }) => {
   useEffect(() => {
     if (record) {
       reset({
-        date: format(new Date(record.date), "yyyy-MM-dd'T'HH:mm"),
+        date: formatForDatetimeInput(record.date),
         bloodPressure: record.bloodPressure,
         bloodSugar: record.bloodSugar,
         cholesterol: record.cholesterol,

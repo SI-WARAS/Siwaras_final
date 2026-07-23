@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '../context/AuthContext';
 import { Activity, ShieldCheck, HeartPulse } from 'lucide-react';
+import { toastSuccess, toastError } from '../utils/toastAlert';
 
 const Login = () => {
   const { register, handleSubmit, formState: { errors } } = useForm();
@@ -14,8 +15,10 @@ const Login = () => {
       setIsLoading(true);
       setServerError('');
       await login(data.username, data.password);
+      toastSuccess(`Selamat datang, ${data.username}!`);
     } catch (err) {
       setServerError(err.message);
+      toastError(err.message || 'Login gagal');
     } finally {
       setIsLoading(false);
     }

@@ -39,26 +39,26 @@ const fetchStats = async () => {
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import { getBasePath } from '../utils/roleHelpers';
-import toast from 'react-hot-toast';
+import { toastSuccess, toastError, toastInfo } from '../utils/toastAlert';
 import { exportDashboardToPDF } from '../utils/exportUtils';
 import { format } from 'date-fns';
 
 const StatCard = ({ title, value, icon: Icon, colorClass, changeStr, isPositive, to }) => (
   <motion.div 
     whileHover={{ y: -2 }}
-    className="bg-white rounded-[20px] p-5 shadow-soft border border-slate-100/50 flex flex-col justify-between hover:border-brand-primary/30 transition-colors cursor-pointer"
+    className="bg-white dark:bg-slate-800 rounded-[20px] p-5 shadow-soft border border-slate-100/50 dark:border-slate-700 flex flex-col justify-between hover:border-brand-primary/30 transition-colors cursor-pointer"
   >
     <Link to={to} className="h-full flex flex-col justify-between outline-none">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-[13px] font-semibold text-slate-600">{title}</h3>
+        <h3 className="text-[13px] font-semibold text-slate-600 dark:text-slate-300">{title}</h3>
         <div className={`text-opacity-80 ${colorClass}`}>
           <Icon className="w-4 h-4" />
         </div>
       </div>
       <div>
         <div className="flex items-baseline gap-3 mb-1">
-          <h3 className="text-[28px] font-bold text-slate-800 tracking-tight">{value}</h3>
-          <div className={`flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold ${isPositive ? 'text-emerald-600 bg-emerald-50' : 'text-brand-primary bg-brand-light/30'}`}>
+          <h3 className="text-[28px] font-bold text-slate-800 dark:text-slate-100 tracking-tight">{value}</h3>
+          <div className={`flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold ${isPositive ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30' : 'text-brand-primary dark:text-rose-400 bg-brand-light/30 dark:bg-rose-900/30'}`}>
             {isPositive ? '↑' : '↓'} {changeStr}
           </div>
         </div>
@@ -88,19 +88,15 @@ const Dashboard = () => {
   const handleExport = () => {
     try {
       exportDashboardToPDF(data);
-      toast.success('Laporan dashboard berhasil diekspor!');
+      toastSuccess('Laporan dashboard berhasil diekspor!');
     } catch (error) {
       console.error(error);
-      toast.error('Gagal mengekspor laporan');
+      toastError('Gagal mengekspor laporan');
     }
   };
 
-  const handleAddWidget = () => {
-    toast('Kustomisasi widget akan segera hadir.', { icon: '🚧' });
-  };
-
   const handleChartMenu = () => {
-    toast('Pilihan grafik tersedia di versi premium.', { icon: '🔒' });
+    toastInfo('Pilihan grafik tersedia di versi premium.');
   };
 
   if (isLoading) return <div className="p-8 text-slate-400 font-medium animate-pulse">Memuat dashboard...</div>;
@@ -194,45 +190,37 @@ const Dashboard = () => {
       {/* Header Section matching reference */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-2">
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Dashboard</h1>
-          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-rose-50 border border-rose-100 rounded-full">
+          <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">Dashboard</h1>
+          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-rose-50 dark:bg-rose-900/30 border border-rose-100 dark:border-rose-800 rounded-full">
             <div className={`w-2 h-2 rounded-full bg-rose-500 ${isFetching ? 'opacity-50' : 'animate-pulse'}`}></div>
-            <span className="text-[10px] font-bold text-rose-600 uppercase tracking-wide">Realtime Live</span>
+            <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wide">Realtime Live</span>
           </div>
         </div>
         
         <div className="flex items-center gap-3">
-          <div className="hidden sm:flex items-center gap-2 bg-white border border-slate-200 px-3 py-1.5 rounded-lg text-[12px] font-medium text-slate-600 shadow-sm">
+          <div className="hidden sm:flex items-center gap-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-lg text-[12px] font-medium text-slate-600 dark:text-slate-300 shadow-sm">
             <Calendar className="w-3.5 h-3.5 text-slate-400" />
-            <span>1 Jan 2026 - {format(new Date(), 'd MMM yyyy')}</span>
-            <span className="ml-2 pl-2 border-l border-slate-200 text-brand-primary font-bold tabular-nums">{format(currentTime, 'HH:mm:ss')}</span>
+            <span>{format(new Date(), 'd MMM yyyy')}</span>
+            <span className="ml-2 pl-2 border-l border-slate-200 dark:border-slate-700 text-brand-primary dark:text-rose-400 font-bold tabular-nums">{format(currentTime, 'HH:mm:ss')}</span>
           </div>
-          <button onClick={handleAddWidget} className="flex items-center gap-2 bg-white border border-slate-200 px-3 py-1.5 rounded-lg text-[12px] font-medium text-slate-600 hover:bg-slate-50 shadow-sm transition-all outline-none">
-            <LayoutGrid className="w-3.5 h-3.5 text-slate-400" />
-            Tambah widget
-          </button>
-          <button onClick={handleExport} className="flex items-center gap-2 bg-brand-primary hover:bg-brand-primary/90 text-white px-4 py-1.5 rounded-lg text-[12px] font-medium shadow-sm transition-all outline-none">
-            <Download className="w-3.5 h-3.5" />
-            Ekspor
-          </button>
         </div>
       </div>
 
       {/* Summary Stat */}
-      <div className="bg-white px-6 py-4 rounded-[20px] shadow-soft border border-slate-100/50 flex items-center justify-between">
+      <div className="bg-white dark:bg-slate-800 px-6 py-4 rounded-[20px] shadow-soft border border-slate-100/50 dark:border-slate-700 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600">
+          <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
             <Users className="w-6 h-6" />
           </div>
           <div>
             <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Pasien Terdaftar</p>
-            <h3 className="text-xl font-bold text-slate-800">{totalPatients} Pasien</h3>
+            <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">{totalPatients} Pasien</h3>
           </div>
         </div>
         <div className="flex gap-8">
            <div className="text-right">
               <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Risiko Tinggi</p>
-              <h3 className="text-lg font-bold text-brand-primary">{ptmCases.hypertension + ptmCases.diabetes + ptmCases.cholesterol + ptmCases.uricAcid}</h3>
+              <h3 className="text-lg font-bold text-brand-primary dark:text-rose-400">{ptmCases.hypertension + ptmCases.diabetes + ptmCases.cholesterol + ptmCases.uricAcid}</h3>
             </div>
         </div>
       </div>
@@ -282,13 +270,13 @@ const Dashboard = () => {
         
         {/* Left Column (takes 2/3 width) */}
         <div className="lg:col-span-2 flex flex-col gap-6">
-          <div className="bg-white p-6 rounded-[20px] shadow-soft border border-slate-100/50">
+          <div className="bg-white dark:bg-slate-800 p-6 rounded-[20px] shadow-soft border border-slate-100/50 dark:border-slate-700">
             <div className="flex justify-between items-start mb-6">
               <div>
-                <h3 className="text-[15px] font-bold text-slate-800">Pertumbuhan Pasien</h3>
+                <h3 className="text-[15px] font-bold text-slate-800 dark:text-slate-100">Pertumbuhan Pasien</h3>
                 <div className="flex items-end gap-3 mt-1">
-                  <span className="text-2xl font-bold text-slate-800">{totalPatients}</span>
-                  <span className="text-[12px] font-medium text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded flex items-center mb-1">
+                  <span className="text-2xl font-bold text-slate-800 dark:text-slate-100">{totalPatients}</span>
+                  <span className="text-[12px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-1.5 py-0.5 rounded flex items-center mb-1">
                     ↑ 24.4% <span className="text-slate-400 font-normal ml-1">vs tahun lalu</span>
                   </span>
                 </div>
@@ -302,10 +290,10 @@ const Dashboard = () => {
 
         {/* Right Column (takes 1/3 width) */}
         <div className="flex flex-col gap-6">
-          <div className="bg-white p-6 rounded-[20px] shadow-soft border border-slate-100/50 h-full flex flex-col">
+          <div className="bg-white dark:bg-slate-800 p-6 rounded-[20px] shadow-soft border border-slate-100/50 dark:border-slate-700 h-full flex flex-col">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-[14px] font-bold text-slate-800">Distribusi Penyakit</h3>
-              <button onClick={handleChartMenu} className="text-slate-400 hover:text-slate-600 px-2 rounded-md hover:bg-slate-50 transition-colors outline-none">•••</button>
+              <h3 className="text-[14px] font-bold text-slate-800 dark:text-slate-100">Distribusi Penyakit</h3>
+              <button onClick={handleChartMenu} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 px-2 rounded-md hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors outline-none">•••</button>
             </div>
             <div className="flex-1 flex flex-col justify-center">
               <div className="h-[180px] flex justify-center items-center relative">
@@ -321,15 +309,15 @@ const Dashboard = () => {
                   }} 
                 />
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-[24px] font-bold text-slate-800">{ptmCases.hypertension + ptmCases.diabetes + ptmCases.cholesterol + ptmCases.uricAcid}</span>
+                  <span className="text-[24px] font-bold text-slate-800 dark:text-slate-100">{ptmCases.hypertension + ptmCases.diabetes + ptmCases.cholesterol + ptmCases.uricAcid}</span>
                   <span className="text-[11px] text-slate-400 font-medium">Kasus Risiko</span>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-x-2 gap-y-2 mt-6">
-                <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-[#C2185B]"></div><span className="text-[11px] font-bold text-slate-600">Hipertensi</span></div>
-                <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-[#FF4081]"></div><span className="text-[11px] font-bold text-slate-600">Diabetes</span></div>
-                <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-[#F06292]"></div><span className="text-[11px] font-bold text-slate-600">Kolesterol</span></div>
-                <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-[#BA68C8]"></div><span className="text-[11px] font-bold text-slate-600">Asam Urat</span></div>
+                <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-[#C2185B]"></div><span className="text-[11px] font-bold text-slate-600 dark:text-slate-300">Hipertensi</span></div>
+                <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-[#FF4081]"></div><span className="text-[11px] font-bold text-slate-600 dark:text-slate-300">Diabetes</span></div>
+                <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-[#F06292]"></div><span className="text-[11px] font-bold text-slate-600 dark:text-slate-300">Kolesterol</span></div>
+                <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-[#BA68C8]"></div><span className="text-[11px] font-bold text-slate-600 dark:text-slate-300">Asam Urat</span></div>
               </div>
             </div>
           </div>
@@ -337,10 +325,10 @@ const Dashboard = () => {
       </div>
 
       {/* Full Width Area */}
-      <div className="bg-white p-6 rounded-[20px] shadow-soft border border-slate-100/50">
+      <div className="bg-white dark:bg-slate-800 p-6 rounded-[20px] shadow-soft border border-slate-100/50 dark:border-slate-700">
         <div className="flex justify-between items-center mb-6">
-          <h3 className="text-[14px] font-bold text-slate-800">Kasus Berdasarkan Wilayah (Padukuhan)</h3>
-          <button onClick={handleChartMenu} className="text-slate-400 hover:text-slate-600 px-2 rounded-md hover:bg-slate-50 transition-colors outline-none">•••</button>
+          <h3 className="text-[14px] font-bold text-slate-800 dark:text-slate-100">Kasus Berdasarkan Wilayah (Padukuhan)</h3>
+          <button onClick={handleChartMenu} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 px-2 rounded-md hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors outline-none">•••</button>
         </div>
         <div className="h-[220px]">
           <Bar data={barData} options={{...chartOptions, maintainAspectRatio: false}} />

@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { UploadCloud, FileDown, CheckCircle2, AlertTriangle, FileSpreadsheet, XCircle } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import api from '../lib/axios';
-import toast from 'react-hot-toast';
+import { toastSuccess, toastError } from '../utils/toastAlert';
 
 const ImportData = () => {
   const [file, setFile] = useState(null);
@@ -56,7 +56,7 @@ const ImportData = () => {
         setFile(selected);
         setStatus('idle');
       } else {
-        toast.error('Harap unggah file Excel (.xlsx atau .xls)');
+        toastError('Harap unggah file Excel (.xlsx atau .xls)');
         e.target.value = null;
       }
     }
@@ -73,7 +73,7 @@ const ImportData = () => {
       setFile(dropped);
       setStatus('idle');
     } else {
-      toast.error('Harap unggah file Excel (.xlsx atau .xls)');
+      toastError('Harap unggah file Excel (.xlsx atau .xls)');
     }
   };
 
@@ -93,15 +93,15 @@ const ImportData = () => {
       const match = response.data.message.match(/(\d+)/);
       setSuccessCount(match ? parseInt(match[1]) : 0);
       setStatus('success');
-      toast.success('Impor berhasil diselesaikan!');
+      toastSuccess('Impor berhasil diselesaikan!');
     } catch (error) {
       if (error.response?.status === 400 && error.response?.data?.details) {
         setErrorReport(error.response.data.details);
         setStatus('error');
-        toast.error('Validasi gagal. Cek laporan kesalahan di bawah.');
+        toastError('Validasi gagal. Cek laporan kesalahan di bawah.');
       } else {
         setStatus('idle');
-        toast.error(error.response?.data?.error || 'Gagal mengimpor data.');
+        toastError(error.response?.data?.error || 'Gagal mengimpor data.');
       }
     }
   };

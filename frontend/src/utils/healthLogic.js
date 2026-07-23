@@ -15,7 +15,8 @@ export const HEALTH_THRESHOLDS = {
     WASPADA: 140,
   },
   CHOLESTEROL: {
-    BAHAYA: 200,
+    WASPADA: 200,
+    BAHAYA: 240,
   },
   URIC_ACID: {
     MALE_BAHAYA: 7.0,
@@ -45,6 +46,7 @@ export const getBSStatus = (bs) => {
 export const getCholesterolStatus = (chol) => {
   const val = parseFloat(chol);
   if (val >= HEALTH_THRESHOLDS.CHOLESTEROL.BAHAYA) return 'bahaya';
+  if (val >= HEALTH_THRESHOLDS.CHOLESTEROL.WASPADA) return 'waspada';
   return 'normal';
 };
 

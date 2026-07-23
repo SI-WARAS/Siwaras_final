@@ -209,9 +209,17 @@ const Landing = () => {
             <div>
               <h4 className="text-[11px] font-bold uppercase tracking-widest text-brand-primary mb-6">Kontak</h4>
               <ul className="space-y-4 text-[14px] text-slate-500">
-                <li>PPK Ormawa IMM FKM 2026</li>
-                <li>Email: hello@siwaras.desa.id</li>
-                <li>Telp: (0274) 123456</li>
+                <li>PPK Ormawa IMM FKM UAD 2026</li>
+                <li>
+                  <a href="mailto:desa.caturharjo@bantulkab.go.id" className="hover:text-brand-primary transition-colors">
+                    desa.caturharjo@bantulkab.go.id
+                  </a>
+                </li>
+                <li>
+                  <a href="https://wa.me/6289542884742" target="_blank" rel="noopener noreferrer" className="hover:text-brand-primary transition-colors">
+                    +62 895-4288-47424
+                  </a>
+                </li>
               </ul>
             </div>
           </div>
