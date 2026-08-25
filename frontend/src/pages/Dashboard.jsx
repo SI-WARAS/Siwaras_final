@@ -1,7 +1,15 @@
-import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import api from '../lib/axios';
-import { Users, AlertCircle, Heart, Activity, Calendar, LayoutGrid, Download } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import api from "../lib/axios";
+import {
+  Users,
+  AlertCircle,
+  Heart,
+  Activity,
+  Calendar,
+  LayoutGrid,
+  Download,
+} from "lucide-react";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -14,9 +22,9 @@ import {
   Tooltip,
   Legend,
   Filler,
-} from 'chart.js';
-import { Line, Bar, Doughnut } from 'react-chartjs-2';
-import { motion } from 'framer-motion';
+} from "chart.js";
+import { Line, Bar, Doughnut } from "react-chartjs-2";
+import { motion } from "framer-motion";
 
 ChartJS.register(
   CategoryScale,
@@ -28,41 +36,57 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  Filler
+  Filler,
 );
 
 const fetchStats = async () => {
-  const { data } = await api.get('/dashboard/stats');
+  const { data } = await api.get("/dashboard/stats");
   return data;
 };
 
-import { useAuth } from '../context/AuthContext';
-import { Link } from 'react-router-dom';
-import { getBasePath } from '../utils/roleHelpers';
-import { toastSuccess, toastError, toastInfo } from '../utils/toastAlert';
-import { exportDashboardToPDF } from '../utils/exportUtils';
-import { format } from 'date-fns';
+import { useAuth } from "../context/AuthContext";
+import { Link } from "react-router-dom";
+import { getBasePath } from "../utils/roleHelpers";
+import { toastSuccess, toastError, toastInfo } from "../utils/toastAlert";
+import { exportDashboardToPDF } from "../utils/exportUtils";
+import { format } from "date-fns";
 
-const StatCard = ({ title, value, icon: Icon, colorClass, changeStr, isPositive, to }) => (
-  <motion.div 
+const StatCard = ({
+  title,
+  value,
+  icon: Icon,
+  colorClass,
+  changeStr,
+  isPositive,
+  to,
+}) => (
+  <motion.div
     whileHover={{ y: -2 }}
     className="bg-white dark:bg-slate-800 rounded-[20px] p-5 shadow-soft border border-slate-100/50 dark:border-slate-700 flex flex-col justify-between hover:border-brand-primary/30 transition-colors cursor-pointer"
   >
     <Link to={to} className="h-full flex flex-col justify-between outline-none">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-[13px] font-semibold text-slate-600 dark:text-slate-300">{title}</h3>
+        <h3 className="text-[13px] font-semibold text-slate-600 dark:text-slate-300">
+          {title}
+        </h3>
         <div className={`text-opacity-80 ${colorClass}`}>
           <Icon className="w-4 h-4" />
         </div>
       </div>
       <div>
         <div className="flex items-baseline gap-3 mb-1">
-          <h3 className="text-[28px] font-bold text-slate-800 dark:text-slate-100 tracking-tight">{value}</h3>
-          <div className={`flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold ${isPositive ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30' : 'text-brand-primary dark:text-rose-400 bg-brand-light/30 dark:bg-rose-900/30'}`}>
-            {isPositive ? '↑' : '↓'} {changeStr}
+          <h3 className="text-[28px] font-bold text-slate-800 dark:text-slate-100 tracking-tight">
+            {value}
+          </h3>
+          <div
+            className={`flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold ${isPositive ? "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30" : "text-brand-primary dark:text-rose-400 bg-brand-light/30 dark:bg-rose-900/30"}`}
+          >
+            {isPositive ? "↑" : "↓"} {changeStr}
           </div>
         </div>
-        <p className="text-[11px] text-slate-400 font-medium">vs periode lalu</p>
+        <p className="text-[11px] text-slate-400 font-medium">
+          vs periode lalu
+        </p>
       </div>
     </Link>
   </motion.div>
@@ -76,11 +100,11 @@ const Dashboard = () => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
-  
+
   const basePath = getBasePath(user?.role);
 
   const { data, isLoading, isError, isFetching } = useQuery({
-    queryKey: ['dashboardStats'],
+    queryKey: ["dashboardStats"],
     queryFn: fetchStats,
     refetchInterval: 5000, // Refresh otomatis setiap 5 detik
   });
@@ -88,37 +112,59 @@ const Dashboard = () => {
   const handleExport = () => {
     try {
       exportDashboardToPDF(data);
-      toastSuccess('Laporan dashboard berhasil diekspor!');
+      toastSuccess("Laporan dashboard berhasil diekspor!");
     } catch (error) {
       console.error(error);
-      toastError('Gagal mengekspor laporan');
+      toastError("Gagal mengekspor laporan");
     }
   };
 
   const handleChartMenu = () => {
-    toastInfo('Pilihan grafik tersedia di versi premium.');
+    toastInfo("Pilihan grafik tersedia di versi premium.");
   };
 
-  if (isLoading) return <div className="p-8 text-slate-400 font-medium animate-pulse">Memuat dashboard...</div>;
-  if (isError) return <div className="p-8 text-brand-primary font-medium">Gagal memuat data dashboard.</div>;
+  if (isLoading)
+    return (
+      <div className="p-8 text-slate-400 font-medium animate-pulse">
+        Memuat dashboard...
+      </div>
+    );
+  if (isError)
+    return (
+      <div className="p-8 text-brand-primary font-medium">
+        Gagal memuat data dashboard.
+      </div>
+    );
 
   const { totalPatients, ptmCases, areaStats } = data;
 
   const doughnutData = {
-    labels: ['Hipertensi', 'Diabetes', 'Kolesterol', 'Asam Urat', 'Lainnya'],
+    labels: ["Hipertensi", "Diabetes", "Kolesterol", "Asam Urat", "Lainnya"],
     datasets: [
       {
         data: [
-          ptmCases.hypertension, 
-          ptmCases.diabetes, 
-          ptmCases.cholesterol, 
-          ptmCases.uricAcid, 
-          ptmCases.other
+          ptmCases.hypertension,
+          ptmCases.diabetes,
+          ptmCases.cholesterol,
+          ptmCases.uricAcid,
+          ptmCases.other,
         ],
-        backgroundColor: ['#C2185B', '#FF4081', '#F06292', '#BA68C8', '#cbd5e1'],
-        hoverBackgroundColor: ['#880E4F', '#f50057', '#ec407a', '#9c27b0', '#94a3b8'],
+        backgroundColor: [
+          "#C2185B",
+          "#FF4081",
+          "#F06292",
+          "#BA68C8",
+          "#cbd5e1",
+        ],
+        hoverBackgroundColor: [
+          "#880E4F",
+          "#f50057",
+          "#ec407a",
+          "#9c27b0",
+          "#94a3b8",
+        ],
         borderWidth: 0,
-        cutout: '75%',
+        cutout: "75%",
       },
     ],
   };
@@ -127,10 +173,10 @@ const Dashboard = () => {
     labels: Object.keys(areaStats),
     datasets: [
       {
-        label: 'Pasien',
+        label: "Pasien",
         data: Object.values(areaStats),
-        backgroundColor: '#FF80AB', // Light bright pink
-        hoverBackgroundColor: '#FF4081',
+        backgroundColor: "#FF80AB", // Light bright pink
+        hoverBackgroundColor: "#FF4081",
         borderRadius: 4,
         barPercentage: 0.6,
       },
@@ -138,17 +184,17 @@ const Dashboard = () => {
   };
 
   const lineData = {
-    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun'],
+    labels: ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun"],
     datasets: [
       {
-        label: 'Pasien Baru',
+        label: "Pasien Baru",
         data: [0, 0, 0, 0, 0, totalPatients],
-        borderColor: '#C2185B', // New Primary
-        backgroundColor: 'rgba(194, 24, 91, 0.08)',
+        borderColor: "#C2185B", // New Primary
+        backgroundColor: "rgba(194, 24, 91, 0.08)",
         tension: 0.4,
         fill: true,
-        pointBackgroundColor: '#fff',
-        pointBorderColor: '#9E1F63',
+        pointBackgroundColor: "#fff",
+        pointBorderColor: "#9E1F63",
         pointBorderWidth: 2,
         pointRadius: 4,
         pointHoverRadius: 6,
@@ -159,30 +205,37 @@ const Dashboard = () => {
 
   const chartOptions = {
     maintainAspectRatio: false,
-    plugins: { 
+    plugins: {
       legend: { display: false },
       tooltip: {
-        backgroundColor: '#ffffff',
-        titleColor: '#1e293b',
-        bodyColor: '#475569',
-        borderColor: '#e2e8f0',
+        backgroundColor: "#ffffff",
+        titleColor: "#1e293b",
+        bodyColor: "#475569",
+        borderColor: "#e2e8f0",
         borderWidth: 1,
         padding: 12,
-        titleFont: { family: 'Inter', size: 13, weight: 'bold' },
-        bodyFont: { family: 'Inter', size: 12, weight: 'medium' },
+        titleFont: { family: "Inter", size: 13, weight: "bold" },
+        bodyFont: { family: "Inter", size: 12, weight: "medium" },
         cornerRadius: 12,
         displayColors: false,
-        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-      }
+        boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+      },
     },
     scales: {
-      x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { family: 'Inter', size: 11 } } },
-      y: { grid: { color: '#f8fafc', borderDash: [4, 4] }, ticks: { color: '#94a3b8', font: { family: 'Inter', size: 11 } }, border: { display: false } }
-    }
+      x: {
+        grid: { display: false },
+        ticks: { color: "#94a3b8", font: { family: "Inter", size: 11 } },
+      },
+      y: {
+        grid: { color: "#f8fafc", borderDash: [4, 4] },
+        ticks: { color: "#94a3b8", font: { family: "Inter", size: 11 } },
+        border: { display: false },
+      },
+    },
   };
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       className="space-y-6 max-w-7xl mx-auto"
@@ -190,18 +243,26 @@ const Dashboard = () => {
       {/* Header Section matching reference */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-2">
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">Dashboard</h1>
+          <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">
+            Dashboard
+          </h1>
           <div className="flex items-center gap-1.5 px-2.5 py-1 bg-rose-50 dark:bg-rose-900/30 border border-rose-100 dark:border-rose-800 rounded-full">
-            <div className={`w-2 h-2 rounded-full bg-rose-500 ${isFetching ? 'opacity-50' : 'animate-pulse'}`}></div>
-            <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wide">Realtime Live</span>
+            <div
+              className={`w-2 h-2 rounded-full bg-rose-500 ${isFetching ? "opacity-50" : "animate-pulse"}`}
+            ></div>
+            <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wide">
+              Realtime Live
+            </span>
           </div>
         </div>
-        
+
         <div className="flex items-center gap-3">
           <div className="hidden sm:flex items-center gap-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-lg text-[12px] font-medium text-slate-600 dark:text-slate-300 shadow-sm">
             <Calendar className="w-3.5 h-3.5 text-slate-400" />
-            <span>{format(new Date(), 'd MMM yyyy')}</span>
-            <span className="ml-2 pl-2 border-l border-slate-200 dark:border-slate-700 text-brand-primary dark:text-rose-400 font-bold tabular-nums">{format(currentTime, 'HH:mm:ss')}</span>
+            <span>{format(new Date(), "d MMM yyyy")}</span>
+            <span className="ml-2 pl-2 border-l border-slate-200 dark:border-slate-700 text-brand-primary dark:text-rose-400 font-bold tabular-nums">
+              {format(currentTime, "HH:mm:ss")}
+            </span>
           </div>
         </div>
       </div>
@@ -213,52 +274,63 @@ const Dashboard = () => {
             <Users className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Pasien Terdaftar</p>
-            <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">{totalPatients} Pasien</h3>
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+              Total Pasien Terdaftar
+            </p>
+            <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">
+              {totalPatients} Pasien
+            </h3>
           </div>
         </div>
         <div className="flex gap-8">
-           <div className="text-right">
-              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Risiko Tinggi</p>
-              <h3 className="text-lg font-bold text-brand-primary dark:text-rose-400">{ptmCases.hypertension + ptmCases.diabetes + ptmCases.cholesterol + ptmCases.uricAcid}</h3>
-            </div>
+          <div className="text-right">
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+              Risiko Tinggi
+            </p>
+            <h3 className="text-lg font-bold text-brand-primary dark:text-rose-400">
+              {ptmCases.hypertension +
+                ptmCases.diabetes +
+                ptmCases.cholesterol +
+                ptmCases.uricAcid}
+            </h3>
+          </div>
         </div>
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <StatCard 
-          title="Kasus Hipertensi" 
-          value={ptmCases.hypertension} 
-          icon={Heart} 
-          colorClass="text-[#C2185B]" 
+        <StatCard
+          title="Kasus Hipertensi"
+          value={ptmCases.hypertension}
+          icon={Heart}
+          colorClass="text-[#C2185B]"
           changeStr="4.2%"
           isPositive={false}
           to={`${basePath}/records`}
         />
-        <StatCard 
-          title="Kasus Diabetes" 
-          value={ptmCases.diabetes} 
-          icon={Activity} 
-          colorClass="text-[#FF4081]" 
+        <StatCard
+          title="Kasus Diabetes"
+          value={ptmCases.diabetes}
+          icon={Activity}
+          colorClass="text-[#FF4081]"
           changeStr="8.1%"
           isPositive={true}
           to={`${basePath}/records`}
         />
-        <StatCard 
-          title="Kasus Kolesterol" 
-          value={ptmCases.cholesterol} 
-          icon={Activity} 
-          colorClass="text-[#F06292]" 
+        <StatCard
+          title="Kasus Kolesterol"
+          value={ptmCases.cholesterol}
+          icon={Activity}
+          colorClass="text-[#F06292]"
           changeStr="2.5%"
           isPositive={true}
           to={`${basePath}/records`}
         />
-        <StatCard 
-          title="Kasus Asam Urat" 
-          value={ptmCases.uricAcid} 
-          icon={Activity} 
-          colorClass="text-[#BA68C8]" 
+        <StatCard
+          title="Kasus Asam Urat"
+          value={ptmCases.uricAcid}
+          icon={Activity}
+          colorClass="text-[#BA68C8]"
           changeStr="3.1%"
           isPositive={false}
           to={`${basePath}/records`}
@@ -267,17 +339,23 @@ const Dashboard = () => {
 
       {/* Main Charts Area */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
         {/* Left Column (takes 2/3 width) */}
         <div className="lg:col-span-2 flex flex-col gap-6">
           <div className="bg-white dark:bg-slate-800 p-6 rounded-[20px] shadow-soft border border-slate-100/50 dark:border-slate-700">
             <div className="flex justify-between items-start mb-6">
               <div>
-                <h3 className="text-[15px] font-bold text-slate-800 dark:text-slate-100">Pertumbuhan Pasien</h3>
+                <h3 className="text-[15px] font-bold text-slate-800 dark:text-slate-100">
+                  Pertumbuhan Pasien
+                </h3>
                 <div className="flex items-end gap-3 mt-1">
-                  <span className="text-2xl font-bold text-slate-800 dark:text-slate-100">{totalPatients}</span>
+                  <span className="text-2xl font-bold text-slate-800 dark:text-slate-100">
+                    {totalPatients}
+                  </span>
                   <span className="text-[12px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-1.5 py-0.5 rounded flex items-center mb-1">
-                    ↑ 24.4% <span className="text-slate-400 font-normal ml-1">vs tahun lalu</span>
+                    ↑ 24.4%{" "}
+                    <span className="text-slate-400 font-normal ml-1">
+                      vs tahun lalu
+                    </span>
                   </span>
                 </div>
               </div>
@@ -292,32 +370,66 @@ const Dashboard = () => {
         <div className="flex flex-col gap-6">
           <div className="bg-white dark:bg-slate-800 p-6 rounded-[20px] shadow-soft border border-slate-100/50 dark:border-slate-700 h-full flex flex-col">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-[14px] font-bold text-slate-800 dark:text-slate-100">Distribusi Penyakit</h3>
-              <button onClick={handleChartMenu} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 px-2 rounded-md hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors outline-none">•••</button>
+              <h3 className="text-[14px] font-bold text-slate-800 dark:text-slate-100">
+                Distribusi Penyakit
+              </h3>
+              <button
+                onClick={handleChartMenu}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 px-2 rounded-md hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors outline-none"
+              >
+                •••
+              </button>
             </div>
             <div className="flex-1 flex flex-col justify-center">
               <div className="h-[180px] flex justify-center items-center relative">
-                <Doughnut 
-                  data={doughnutData} 
+                <Doughnut
+                  data={doughnutData}
                   options={{
                     ...chartOptions,
-                    cutout: '75%',
+                    cutout: "75%",
                     scales: {
                       x: { display: false },
-                      y: { display: false }
-                    }
-                  }} 
+                      y: { display: false },
+                    },
+                  }}
                 />
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-[24px] font-bold text-slate-800 dark:text-slate-100">{ptmCases.hypertension + ptmCases.diabetes + ptmCases.cholesterol + ptmCases.uricAcid}</span>
-                  <span className="text-[11px] text-slate-400 font-medium">Kasus Risiko</span>
+                  <span className="text-[24px] font-bold text-slate-800 dark:text-slate-100">
+                    {ptmCases.hypertension +
+                      ptmCases.diabetes +
+                      ptmCases.cholesterol +
+                      ptmCases.uricAcid}
+                  </span>
+                  <span className="text-[11px] text-slate-400 font-medium">
+                    Kasus Risiko
+                  </span>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-x-2 gap-y-2 mt-6">
-                <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-[#C2185B]"></div><span className="text-[11px] font-bold text-slate-600 dark:text-slate-300">Hipertensi</span></div>
-                <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-[#FF4081]"></div><span className="text-[11px] font-bold text-slate-600 dark:text-slate-300">Diabetes</span></div>
-                <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-[#F06292]"></div><span className="text-[11px] font-bold text-slate-600 dark:text-slate-300">Kolesterol</span></div>
-                <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-[#BA68C8]"></div><span className="text-[11px] font-bold text-slate-600 dark:text-slate-300">Asam Urat</span></div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#C2185B]"></div>
+                  <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300">
+                    Hipertensi
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#FF4081]"></div>
+                  <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300">
+                    Diabetes
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#F06292]"></div>
+                  <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300">
+                    Kolesterol
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#BA68C8]"></div>
+                  <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300">
+                    Asam Urat
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -327,11 +439,21 @@ const Dashboard = () => {
       {/* Full Width Area */}
       <div className="bg-white dark:bg-slate-800 p-6 rounded-[20px] shadow-soft border border-slate-100/50 dark:border-slate-700">
         <div className="flex justify-between items-center mb-6">
-          <h3 className="text-[14px] font-bold text-slate-800 dark:text-slate-100">Kasus Berdasarkan Wilayah (Padukuhan)</h3>
-          <button onClick={handleChartMenu} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 px-2 rounded-md hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors outline-none">•••</button>
+          <h3 className="text-[14px] font-bold text-slate-800 dark:text-slate-100">
+            Kasus Berdasarkan Wilayah (Padukuhan)
+          </h3>
+          <button
+            onClick={handleChartMenu}
+            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 px-2 rounded-md hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors outline-none"
+          >
+            •••
+          </button>
         </div>
         <div className="h-[220px]">
-          <Bar data={barData} options={{...chartOptions, maintainAspectRatio: false}} />
+          <Bar
+            data={barData}
+            options={{ ...chartOptions, maintainAspectRatio: false }}
+          />
         </div>
       </div>
     </motion.div>

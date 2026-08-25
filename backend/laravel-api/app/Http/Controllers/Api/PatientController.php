@@ -89,25 +89,42 @@ class PatientController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'nik'          => 'nullable|string|max:20',
-            'name'         => 'required|string|max:255',
-            'age'          => 'required|integer|min:0',
-            'gender'       => 'required|in:MALE,FEMALE',
-            'address'      => 'required|string',
-            'phone'        => 'nullable|string|max:20',
-            'pedukuhan_id' => 'nullable|uuid|exists:pedukuhans,id',
-        ]);
+        try {
+            $validated = $request->validate([
+                'nik'          => 'nullable|string|max:20|unique:patients,nik',
+                'name'         => 'required|string|max:255',
+                'age'          => 'required|integer|min:0',
+                'gender'       => 'required|in:MALE,FEMALE',
+                'address'      => 'required|string',
+                'phone'        => 'nullable|string|max:20',
+                'pedukuhan_id' => 'nullable|uuid|exists:pedukuhans,id',
+            ]);
 
-        $user = $request->user();
-        // Non-admin: force own pedukuhan
-        if ($user && !in_array($user->role, ['ADMIN', 'VILLAGE_HEAD'])) {
-            $validated['pedukuhan_id'] = $user->pedukuhan_id;
+            if (array_key_exists('nik', $validated) && trim((string) $validated['nik']) === '') {
+                $validated['nik'] = null;
+            }
+
+            $user = $request->user();
+            // Non-admin: force own pedukuhan
+            if ($user && !in_array($user->role, ['ADMIN', 'VILLAGE_HEAD'])) {
+                $validated['pedukuhan_id'] = $user->pedukuhan_id;
+            } elseif (empty($validated['pedukuhan_id']) && $request->filled('padukuhan')) {
+                $ped = Pedukuhan::where('name', trim($request->input('padukuhan')))->first();
+                if ($ped) {
+                    $validated['pedukuhan_id'] = $ped->id;
+                }
+            }
+
+            $patient = Patient::create(array_merge(['id' => Str::uuid()->toString()], $validated));
+            return response()->json($patient->load('pedukuhan'), 201);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'error'  => 'Validasi data pasien tidak valid',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Throwable $e) {
+            return response()->json(['error' => 'Gagal menyimpan data pasien: ' . $e->getMessage()], 500);
         }
-
-        $patient = Patient::create(array_merge(['id' => Str::uuid()->toString()], $validated));
-
-        return response()->json($patient->load('pedukuhan'), 201);
     }
 
     /**
@@ -121,7 +138,7 @@ class PatientController extends Controller
         }
 
         $validated = $request->validate([
-            'nik'          => 'nullable|string|max:20',
+            'nik'          => 'nullable|string|max:20|unique:patients,nik,' . $id,
             'name'         => 'sometimes|required|string|max:255',
             'age'          => 'sometimes|required|integer|min:0',
             'gender'       => 'sometimes|required|in:MALE,FEMALE',
@@ -130,9 +147,23 @@ class PatientController extends Controller
             'pedukuhan_id' => 'nullable|uuid|exists:pedukuhans,id',
         ]);
 
-        $patient->update($validated);
+        if (array_key_exists('nik', $validated) && trim((string) $validated['nik']) === '') {
+            $validated['nik'] = null;
+        }
 
-        return response()->json($patient->load('pedukuhan'));
+        if (empty($validated['pedukuhan_id']) && $request->filled('padukuhan')) {
+            $ped = Pedukuhan::where('name', trim($request->input('padukuhan')))->first();
+            if ($ped) {
+                $validated['pedukuhan_id'] = $ped->id;
+            }
+        }
+
+        try {
+            $patient->update($validated);
+            return response()->json($patient->load('pedukuhan'));
+        } catch (\Throwable $e) {
+            return response()->json(['error' => 'Gagal memperbarui data pasien: ' . $e->getMessage()], 500);
+        }
     }
 
     /**

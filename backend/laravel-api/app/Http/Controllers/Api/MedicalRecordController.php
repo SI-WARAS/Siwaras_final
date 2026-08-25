@@ -16,47 +16,52 @@ class MedicalRecordController extends Controller
     // -----------------------------------------------------------------------
     // Health logic helpers (sesuai Node.js healthLogic.js)
     // -----------------------------------------------------------------------
-    private function getBPStatus(?string $bp): string
+    private function getBPStatus(?string $bp): ?string
     {
-        if (!$bp) return 'normal';
-        $parts = explode('/', $bp);
-        if (count($parts) !== 2) return 'normal';
+        if (!$bp) return null;
+        $parts = explode('/', trim($bp));
+        if (count($parts) < 2) return null;
         [$s, $d] = [(int) $parts[0], (int) $parts[1]];
+        if ($s === 0 && $d === 0) return null;
+        if ($s < 90 || $d < 60) return 'rendah';
         if ($s >= 140 || $d >= 90) return 'bahaya';
-        if ($s >= 130 || $d >= 80) return 'waspada';
+        if ($s > 120 || $d > 80) return 'waspada';
         return 'normal';
     }
 
-    private function getBSStatus(?float $v): string
+    private function getBSStatus(?float $v): ?string
     {
-        if ($v === null) return 'normal';
-        return $v >= 200 ? 'bahaya' : ($v >= 100 ? 'waspada' : 'normal');
+        if ($v === null) return null;
+        if ($v < 70) return 'rendah';
+        return $v >= 200 ? 'bahaya' : ($v >= 140 ? 'waspada' : 'normal');
     }
 
-    private function getCholesterolStatus(?float $v): string
+    private function getCholesterolStatus(?float $v): ?string
     {
-        if ($v === null) return 'normal';
+        if ($v === null) return null;
         return $v >= 240 ? 'bahaya' : ($v >= 200 ? 'waspada' : 'normal');
     }
 
-    private function getUAStatus(?float $v, ?string $gender): string
+    private function getUAStatus(?float $v, ?string $gender): ?string
     {
-        if ($v === null) return 'normal';
+        if ($v === null) return null;
         $limit = ($gender === 'FEMALE') ? 6.0 : 7.0;
         return $v > $limit ? 'bahaya' : ($v > ($limit - 1) ? 'waspada' : 'normal');
     }
 
     private function computeMetrics(array $data, ?string $gender): array
     {
-        $weight  = (float) ($data['weight'] ?? 0);
-        $height  = (float) ($data['height'] ?? 0);
+        $weight  = isset($data['weight']) && $data['weight'] !== null ? (float) $data['weight'] : 0;
+        $height  = isset($data['height']) && $data['height'] !== null ? (float) $data['height'] : 0;
         $heightM = $height / 100;
-        $bmi     = ($heightM > 0) ? round($weight / ($heightM * $heightM), 2) : null;
+        $bmi     = ($heightM > 0 && $weight > 0) ? round($weight / ($heightM * $heightM), 2) : null;
 
         $bpStatus   = $this->getBPStatus($data['blood_pressure'] ?? null);
-        $bsStatus   = $this->getBSStatus(isset($data['blood_sugar'])  ? (float) $data['blood_sugar']  : null);
-        $cholStatus = $this->getCholesterolStatus(isset($data['cholesterol']) ? (float) $data['cholesterol'] : null);
-        $uaStatus   = $this->getUAStatus(isset($data['uric_acid'])  ? (float) $data['uric_acid']  : null, $gender);
+        $bsStatus   = $this->getBSStatus(isset($data['blood_sugar']) && $data['blood_sugar'] !== null ? (float) $data['blood_sugar'] : null);
+        $cholStatus = $this->getCholesterolStatus(isset($data['cholesterol']) && $data['cholesterol'] !== null ? (float) $data['cholesterol'] : null);
+        $uaStatus   = $this->getUAStatus(isset($data['uric_acid']) && $data['uric_acid'] !== null ? (float) $data['uric_acid'] : null, $gender);
+
+        $statuses = array_filter([$bpStatus, $bsStatus, $cholStatus, $uaStatus]);
 
         return [
             'bmi'                   => $bmi,
@@ -64,7 +69,7 @@ class MedicalRecordController extends Controller
             'blood_sugar_status'    => $bsStatus,
             'cholesterol_status'    => $cholStatus,
             'uric_acid_status'      => $uaStatus,
-            'is_risk'               => in_array('bahaya', [$bpStatus, $bsStatus, $cholStatus, $uaStatus]),
+            'is_risk'               => in_array('bahaya', $statuses),
         ];
     }
 
@@ -81,9 +86,13 @@ class MedicalRecordController extends Controller
     // -----------------------------------------------------------------------
     public function index(Request $request)
     {
-        $query = MedicalRecord::with(['patient.pedukuhan']);
-        $this->tenantScope($query, $request->user());
-        return response()->json($query->orderByDesc('date')->get());
+        try {
+            $query = MedicalRecord::with(['patient.pedukuhan']);
+            $this->tenantScope($query, $request->user());
+            return response()->json($query->orderByDesc('date')->get());
+        } catch (\Throwable $e) {
+            return response()->json(['error' => 'Gagal mengambil rekam medis', 'message' => $e->getMessage()], 500);
+        }
     }
 
     // -----------------------------------------------------------------------
@@ -91,11 +100,15 @@ class MedicalRecordController extends Controller
     // -----------------------------------------------------------------------
     public function show(Request $request, string $id)
     {
-        $query = MedicalRecord::with('patient');
-        $this->tenantScope($query, $request->user());
-        $record = $query->find($id);
-        if (!$record) return response()->json(['error' => 'Record not found'], 404);
-        return response()->json($record);
+        try {
+            $query = MedicalRecord::with('patient');
+            $this->tenantScope($query, $request->user());
+            $record = $query->find($id);
+            if (!$record) return response()->json(['error' => 'Record not found'], 404);
+            return response()->json($record);
+        } catch (\Throwable $e) {
+            return response()->json(['error' => 'Gagal mengambil rekam medis', 'message' => $e->getMessage()], 500);
+        }
     }
 
     // -----------------------------------------------------------------------
@@ -103,19 +116,23 @@ class MedicalRecordController extends Controller
     // -----------------------------------------------------------------------
     public function byPatient(Request $request, string $patientId)
     {
-        $patient = Patient::find($patientId);
-        if (!$patient) return response()->json(['error' => 'Patient not found'], 404);
+        try {
+            $patient = Patient::find($patientId);
+            if (!$patient) return response()->json(['error' => 'Patient not found'], 404);
 
-        $user = $request->user();
-        if ($user && !in_array($user->role, ['ADMIN', 'VILLAGE_HEAD'])) {
-            if ($patient->pedukuhan_id !== $user->pedukuhan_id) {
-                return response()->json(['error' => 'Forbidden'], 403);
+            $user = $request->user();
+            if ($user && !in_array($user->role, ['ADMIN', 'VILLAGE_HEAD'])) {
+                if ($patient->pedukuhan_id !== $user->pedukuhan_id) {
+                    return response()->json(['error' => 'Forbidden'], 403);
+                }
             }
-        }
 
-        return response()->json(
-            MedicalRecord::where('patient_id', $patientId)->orderByDesc('date')->get()
-        );
+            return response()->json(
+                MedicalRecord::where('patient_id', $patientId)->orderByDesc('date')->get()
+            );
+        } catch (\Throwable $e) {
+            return response()->json(['error' => 'Gagal mengambil rekam medis pasien', 'message' => $e->getMessage()], 500);
+        }
     }
 
     // -----------------------------------------------------------------------
@@ -123,30 +140,59 @@ class MedicalRecordController extends Controller
     // -----------------------------------------------------------------------
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'patient_id'     => 'required|uuid|exists:patients,id',
-            'date'           => 'required|date',
-            'blood_pressure' => 'nullable|string|max:20',
-            'blood_sugar'    => 'nullable|numeric|min:0',
-            'cholesterol'    => 'nullable|numeric|min:0',
-            'uric_acid'      => 'nullable|numeric|min:0',
-            'weight'         => 'nullable|numeric|min:0',
-            'height'         => 'nullable|numeric|min:0',
-            'smoking_status' => 'nullable|boolean',
-            'activity_level' => 'nullable|in:rendah,sedang,tinggi',
-            'notes'          => 'nullable|string',
-        ]);
+        try {
+            $validated = $request->validate([
+                'patient_id'          => 'required|exists:patients,id',
+                'date'                => 'required',
+                'blood_pressure'      => 'nullable|string|max:20',
+                'blood_sugar'         => 'nullable|numeric|min:0',
+                'cholesterol'         => 'nullable|numeric|min:0',
+                'uric_acid'           => 'nullable|numeric|min:0',
+                'weight'              => 'nullable|numeric|min:0',
+                'height'              => 'nullable|numeric|min:0',
+                'waist_circumference' => 'nullable|numeric|min:0',
+                'lila'                => 'nullable|numeric|min:0',
+                'mental_health_score' => 'nullable|integer|min:0|max:20',
+                'mental_health_q17'   => 'nullable|boolean',
+                'puma_score'          => 'nullable|integer|min:0|max:10',
+                'dependency_level'    => 'nullable|string|max:20',
+                'smoking_status'      => 'nullable|boolean',
+                'activity_level'      => 'nullable|in:rendah,sedang,tinggi',
+                'notes'               => 'nullable|string',
+            ]);
 
-        $patient = Patient::findOrFail($validated['patient_id']);
-        $metrics = $this->computeMetrics($validated, $patient->gender);
+            if (!empty($validated['date'])) {
+                $validated['date'] = date('Y-m-d', strtotime($validated['date']));
+            }
 
-        $record = MedicalRecord::create(array_merge(
-            ['id' => Str::uuid()->toString()],
-            $validated,
-            $metrics
-        ));
+            // Ensure boolean fields are never null to satisfy database constraints
+            $validated['mental_health_q17'] = !empty($validated['mental_health_q17']);
+            $validated['smoking_status']     = !empty($validated['smoking_status']);
 
-        return response()->json($record->load('patient'), 201);
+            $patient = Patient::findOrFail($validated['patient_id']);
+            $metrics = $this->computeMetrics($validated, $patient->gender);
+
+            $record = MedicalRecord::create(array_merge(
+                ['id' => Str::uuid()->toString()],
+                $validated,
+                $metrics
+            ));
+
+            return response()->json($record->load('patient'), 201);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'error'   => 'Validasi data medis tidak valid',
+                'errors'  => $e->errors(),
+            ], 422);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('MedicalRecord Store Error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'error'   => 'Gagal menyimpan rekam medis',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 
     // -----------------------------------------------------------------------
@@ -154,27 +200,59 @@ class MedicalRecordController extends Controller
     // -----------------------------------------------------------------------
     public function update(Request $request, string $id)
     {
-        $record = MedicalRecord::with('patient')->find($id);
-        if (!$record) return response()->json(['error' => 'Medical record not found'], 404);
+        try {
+            $record = MedicalRecord::with('patient')->find($id);
+            if (!$record) return response()->json(['error' => 'Medical record not found'], 404);
 
-        $validated = $request->validate([
-            'date'           => 'sometimes|required|date',
-            'blood_pressure' => 'nullable|string|max:20',
-            'blood_sugar'    => 'nullable|numeric|min:0',
-            'cholesterol'    => 'nullable|numeric|min:0',
-            'uric_acid'      => 'nullable|numeric|min:0',
-            'weight'         => 'nullable|numeric|min:0',
-            'height'         => 'nullable|numeric|min:0',
-            'smoking_status' => 'nullable|boolean',
-            'activity_level' => 'nullable|in:rendah,sedang,tinggi',
-            'notes'          => 'nullable|string',
-        ]);
+            $validated = $request->validate([
+                'date'                => 'sometimes|required',
+                'blood_pressure'      => 'nullable|string|max:20',
+                'blood_sugar'         => 'nullable|numeric|min:0',
+                'cholesterol'         => 'nullable|numeric|min:0',
+                'uric_acid'           => 'nullable|numeric|min:0',
+                'weight'              => 'nullable|numeric|min:0',
+                'height'              => 'nullable|numeric|min:0',
+                'waist_circumference' => 'nullable|numeric|min:0',
+                'lila'                => 'nullable|numeric|min:0',
+                'mental_health_score' => 'nullable|integer|min:0|max:20',
+                'mental_health_q17'   => 'nullable|boolean',
+                'puma_score'          => 'nullable|integer|min:0|max:10',
+                'dependency_level'    => 'nullable|string|max:20',
+                'smoking_status'      => 'nullable|boolean',
+                'activity_level'      => 'nullable|in:rendah,sedang,tinggi',
+                'notes'               => 'nullable|string',
+            ]);
 
-        $merged  = array_merge($record->toArray(), $validated);
-        $metrics = $this->computeMetrics($merged, $record->patient->gender ?? null);
-        $record->update(array_merge($validated, $metrics));
+            if (!empty($validated['date'])) {
+                $validated['date'] = date('Y-m-d', strtotime($validated['date']));
+            }
 
-        return response()->json($record);
+            if (array_key_exists('mental_health_q17', $validated)) {
+                $validated['mental_health_q17'] = !empty($validated['mental_health_q17']);
+            }
+            if (array_key_exists('smoking_status', $validated)) {
+                $validated['smoking_status'] = !empty($validated['smoking_status']);
+            }
+
+            $merged  = array_merge($record->toArray(), $validated);
+            $metrics = $this->computeMetrics($merged, $record->patient->gender ?? null);
+            $record->update(array_merge($validated, $metrics));
+
+            return response()->json($record);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'error'   => 'Validasi data medis tidak valid',
+                'errors'  => $e->errors(),
+            ], 422);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('MedicalRecord Update Error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'error'   => 'Gagal memperbarui rekam medis',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 
     // -----------------------------------------------------------------------
@@ -197,11 +275,17 @@ class MedicalRecordController extends Controller
             'file' => 'required|file|mimes:xlsx,xls|max:10240',
         ]);
 
+        if (!extension_loaded('zip')) {
+            return response()->json([
+                'error' => 'Ekstensi PHP "zip" (ZipArchive) belum diaktifkan di server PHP. Silakan aktifkan extension=zip pada file php.ini.'
+            ], 400);
+        }
+
         try {
             $spreadsheet = IOFactory::load($request->file('file')->getPathname());
             $sheet       = $spreadsheet->getActiveSheet();
             $rows        = $sheet->toArray(null, true, true, false);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return response()->json(['error' => 'File tidak dapat dibaca: ' . $e->getMessage()], 400);
         }
 
@@ -283,6 +367,12 @@ class MedicalRecordController extends Controller
                 'uric_acid'      => !empty($data['uricAcid']) ? (float) $data['uricAcid'] : null,
                 'weight'         => !empty($data['weight']) ? (float) $data['weight'] : null,
                 'height'         => !empty($data['height']) ? (float) $data['height'] : null,
+                'waist_circumference' => !empty($data['waistCircumference']) ? (float) $data['waistCircumference'] : (!empty($data['waist_circumference']) ? (float) $data['waist_circumference'] : null),
+                'lila'                => !empty($data['lila']) ? (float) $data['lila'] : (!empty($data['armCircumference']) ? (float) $data['armCircumference'] : null),
+                'mental_health_score' => isset($data['mentalHealthScore']) && $data['mentalHealthScore'] !== '' ? (int) $data['mentalHealthScore'] : (isset($data['mental_health_score']) && $data['mental_health_score'] !== '' ? (int) $data['mental_health_score'] : null),
+                'mental_health_q17'   => (!empty($data['mentalHealthQ17']) && strtolower($data['mentalHealthQ17']) !== 'false' && $data['mentalHealthQ17'] !== '0') || (!empty($data['mental_health_q17']) && strtolower($data['mental_health_q17']) !== 'false' && $data['mental_health_q17'] !== '0'),
+                'puma_score'          => isset($data['pumaScore']) && $data['pumaScore'] !== '' ? (int) $data['pumaScore'] : (isset($data['puma_score']) && $data['puma_score'] !== '' ? (int) $data['puma_score'] : null),
+                'dependency_level'    => !empty($data['dependencyLevel']) ? trim($data['dependencyLevel']) : (!empty($data['dependency_level']) ? trim($data['dependency_level']) : null),
                 'smoking_status' => !empty($data['smokingStatus']) && strtolower($data['smokingStatus']) !== 'false' && $data['smokingStatus'] !== '0',
                 'activity_level' => $activityLevel,
                 'notes'          => trim($data['notes'] ?? ''),
@@ -338,6 +428,12 @@ class MedicalRecordController extends Controller
                     'uric_acid'      => $row['uric_acid'],
                     'weight'         => $row['weight'],
                     'height'         => $row['height'],
+                    'waist_circumference' => $row['waist_circumference'],
+                    'lila'                => $row['lila'],
+                    'mental_health_score' => $row['mental_health_score'],
+                    'mental_health_q17'   => $row['mental_health_q17'],
+                    'puma_score'          => $row['puma_score'],
+                    'dependency_level'    => $row['dependency_level'],
                     'smoking_status' => $row['smoking_status'],
                     'activity_level' => $row['activity_level'],
                     'notes'          => $row['notes'] ?: null,
@@ -350,7 +446,7 @@ class MedicalRecordController extends Controller
             return response()->json([
                 'message' => "Berhasil mengimpor {$count} data rekam medis secara sukses.",
             ]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollBack();
             return response()->json(['error' => 'Kesalahan server saat memproses data: ' . $e->getMessage()], 500);
         }
@@ -439,6 +535,12 @@ class MedicalRecordController extends Controller
             }
             if (in_array('weight', $fields))        $row['weight']        = $r->weight;
             if (in_array('height', $fields))        $row['height']        = $r->height;
+            if (in_array('waistCircumference', $fields)) $row['waistCircumference'] = $r->waist_circumference;
+            if (in_array('lila', $fields))          $row['lila']          = $r->lila;
+            if (in_array('mentalHealthScore', $fields))   $row['mentalHealthScore']   = $r->mental_health_score;
+            if (in_array('mentalHealthQ17', $fields))     $row['mentalHealthQ17']     = (bool) $r->mental_health_q17;
+            if (in_array('pumaScore', $fields))           $row['pumaScore']           = $r->puma_score;
+            if (in_array('dependencyLevel', $fields))     $row['dependencyLevel']     = $r->dependency_level;
             if (in_array('bmi', $fields))           $row['bmi']           = $r->bmi;
             if (in_array('smokingStatus', $fields)) $row['smokingStatus'] = (bool) $r->smoking_status;
             if (in_array('activityLevel', $fields)) $row['activityLevel'] = $r->activity_level;

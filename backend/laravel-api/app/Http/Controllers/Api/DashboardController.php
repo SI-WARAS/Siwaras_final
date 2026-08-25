@@ -18,15 +18,17 @@ class DashboardController extends Controller
     {
         if (!$bp) return 'normal';
         $parts = explode('/', $bp);
-        if (count($parts) !== 2) return 'normal';
+        if (count($parts) < 2) return 'normal';
         [$s, $d] = [(int) $parts[0], (int) $parts[1]];
-        return ($s >= 140 || $d >= 90) ? 'bahaya' : (($s >= 130 || $d >= 80) ? 'waspada' : 'normal');
+        if ($s < 90 || $d < 60) return 'rendah';
+        return ($s >= 140 || $d >= 90) ? 'bahaya' : (($s > 120 || $d > 80) ? 'waspada' : 'normal');
     }
 
     private function getBSStatus(?float $v): string
     {
         if ($v === null) return 'normal';
-        return $v >= 200 ? 'bahaya' : ($v >= 100 ? 'waspada' : 'normal');
+        if ($v < 70) return 'rendah';
+        return $v >= 200 ? 'bahaya' : ($v >= 140 ? 'waspada' : 'normal');
     }
 
     private function getCholesterolStatus(?float $v): string

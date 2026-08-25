@@ -1,5 +1,5 @@
-import { useFontScale } from '../../context/FontScaleContext';
-import { Plus, Minus, RotateCcw } from 'lucide-react';
+import { useFontScale } from "../../context/FontScaleContext";
+import { Plus, Minus, RotateCcw } from "lucide-react";
 
 const FontController = () => {
   const { scale, incrementFont, decrementFont, resetFont } = useFontScale();
@@ -14,7 +14,7 @@ const FontController = () => {
       >
         <Minus className="w-3.5 h-3.5" />
       </button>
-      
+
       <span className="text-[11px] font-bold text-slate-500 min-w-[38px] text-center select-none bg-white py-0.5 px-1 rounded-md shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
         {Math.round(scale * 100)}%
       </span>

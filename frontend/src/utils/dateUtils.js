@@ -18,14 +18,19 @@
  */
 export function getNowLocalISO() {
   const now = new Date();
-  const pad = (n) => String(n).padStart(2, '0');
+  const pad = (n) => String(n).padStart(2, "0");
   return (
     now.getFullYear() +
-    '-' + pad(now.getMonth() + 1) +
-    '-' + pad(now.getDate()) +
-    'T' + pad(now.getHours()) +
-    ':' + pad(now.getMinutes()) +
-    ':' + pad(now.getSeconds())
+    "-" +
+    pad(now.getMonth() + 1) +
+    "-" +
+    pad(now.getDate()) +
+    "T" +
+    pad(now.getHours()) +
+    ":" +
+    pad(now.getMinutes()) +
+    ":" +
+    pad(now.getSeconds())
   );
 }
 
@@ -49,33 +54,33 @@ export function getNowForDatetimeInput() {
  * @returns {string} Tanggal dalam format Indonesia, misal "17 Jun 2026, 13:45"
  */
 export function formatDisplayDate(dateInput, { showTime = true } = {}) {
-  if (!dateInput) return '-';
+  if (!dateInput) return "-";
 
   let date;
-  if (typeof dateInput === 'string') {
+  if (typeof dateInput === "string") {
     // Jika string tidak memiliki 'Z' atau '+', anggap sebagai waktu lokal
     // agar JavaScript tidak mengkonversinya dari UTC secara salah.
     const hasTimezone = /Z|[+-]\d{2}:\d{2}$/.test(dateInput);
-    date = new Date(hasTimezone ? dateInput : dateInput.replace(' ', 'T'));
+    date = new Date(hasTimezone ? dateInput : dateInput.replace(" ", "T"));
   } else {
     date = dateInput;
   }
 
-  if (isNaN(date.getTime())) return '-';
+  if (isNaN(date.getTime())) return "-";
 
   const localeOptions = {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
     ...(showTime && {
-      hour: '2-digit',
-      minute: '2-digit',
+      hour: "2-digit",
+      minute: "2-digit",
       hour12: false,
     }),
-    timeZone: 'Asia/Jakarta',
+    timeZone: "Asia/Jakarta",
   };
 
-  return date.toLocaleString('id-ID', localeOptions);
+  return date.toLocaleString("id-ID", localeOptions);
 }
 
 /**
@@ -86,27 +91,30 @@ export function formatDisplayDate(dateInput, { showTime = true } = {}) {
  * @returns {string} Format "YYYY-MM-DDTHH:mm"
  */
 export function formatForDatetimeInput(dateInput) {
-  if (!dateInput) return '';
+  if (!dateInput) return "";
 
   let date;
-  if (typeof dateInput === 'string') {
+  if (typeof dateInput === "string") {
     const hasTimezone = /Z|[+-]\d{2}:\d{2}$/.test(dateInput);
-    date = new Date(hasTimezone ? dateInput : dateInput.replace(' ', 'T'));
+    date = new Date(hasTimezone ? dateInput : dateInput.replace(" ", "T"));
   } else {
     date = dateInput;
   }
 
-  if (isNaN(date.getTime())) return '';
+  if (isNaN(date.getTime())) return "";
 
   // Format ke "YYYY-MM-DDTHH:mm" menggunakan timezone Asia/Jakarta
-  const tz = 'Asia/Jakarta';
-  const parts = new Intl.DateTimeFormat('sv-SE', {
-    year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit',
+  const tz = "Asia/Jakarta";
+  const parts = new Intl.DateTimeFormat("sv-SE", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
     hour12: false,
     timeZone: tz,
   }).format(date);
 
   // Intl dengan locale "sv-SE" menghasilkan "YYYY-MM-DD HH:mm", ubah spasi ke T
-  return parts.replace(' ', 'T');
+  return parts.replace(" ", "T");
 }

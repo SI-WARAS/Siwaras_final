@@ -1,12 +1,13 @@
-// filepath: frontend/src/utils/api.js
-// ...existing code...
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
+import api from "../lib/axios";
 
+/**
+ * Utility helper for GET requests using centralized Axios instance
+ * Prevents URL mangling (e.g. converting https:// to https:/) and attaches Auth Token automatically.
+ */
 export async function apiGet(path) {
-  const res = await fetch(`${API_BASE}/${path}`.replace(/\/+/g, '/'), {
-    credentials: 'include', // jika pakai session/cookies dari Laravel
-  })
-  if (!res.ok) throw new Error(await res.text())
-  return res.json()
+  const cleanPath = path.replace(/^\/+/, "");
+  const response = await api.get(`/${cleanPath}`);
+  return response.data;
 }
-// ...existing code...
+
+export default apiGet;

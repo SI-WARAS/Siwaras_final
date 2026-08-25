@@ -1,45 +1,47 @@
-import { useState, useRef, useEffect } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import { User, Bell, Search, AlertCircle } from 'lucide-react';
-import { format } from 'date-fns';
-import { Link, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import api from '../../lib/axios';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useRef, useEffect } from "react";
+import { useAuth } from "../../context/AuthContext";
+import { User, Bell, Search, AlertCircle } from "lucide-react";
+import { format } from "date-fns";
+import { Link, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import api from "../../lib/axios";
+import { motion, AnimatePresence } from "framer-motion";
 
-import FontController from './FontController';
+import FontController from "./FontController";
 
 const Navbar = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [showNotifications, setShowNotifications] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const searchRef = useRef(null);
   const notifRef = useRef(null);
 
   const { data: searchResults, isLoading } = useQuery({
-    queryKey: ['globalSearch', searchTerm],
+    queryKey: ["globalSearch", searchTerm],
     queryFn: async () => {
       if (!searchTerm) return [];
       const { data } = await api.get(`/patients?search=${searchTerm}&limit=5`);
       return data.patients || [];
     },
-    enabled: searchTerm.length > 0
+    enabled: searchTerm.length > 0,
   });
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (searchRef.current && !searchRef.current.contains(event.target)) setShowSearch(false);
-      if (notifRef.current && !notifRef.current.contains(event.target)) setShowNotifications(false);
+      if (searchRef.current && !searchRef.current.contains(event.target))
+        setShowSearch(false);
+      if (notifRef.current && !notifRef.current.contains(event.target))
+        setShowNotifications(false);
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const handleResultClick = (id) => {
     setShowSearch(false);
-    setSearchTerm('');
+    setSearchTerm("");
     navigate(`/patients/${id}`);
   };
 
@@ -48,9 +50,9 @@ const Navbar = () => {
       <div className="flex items-center flex-1">
         <div className="relative hidden sm:block w-72" ref={searchRef}>
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 transform -translate-y-1/2" />
-          <input 
-            type="text" 
-            placeholder="Search patients..." 
+          <input
+            type="text"
+            placeholder="Search patients..."
             value={searchTerm}
             onChange={(e) => {
               setSearchTerm(e.target.value);
@@ -60,23 +62,27 @@ const Navbar = () => {
             className="w-full pl-10 pr-12 py-2 bg-[#F8F9FB] dark:bg-slate-700 border border-transparent focus:border-slate-200 dark:focus:border-slate-600 focus:bg-white dark:focus:bg-slate-800 rounded-full text-[13px] text-slate-600 dark:text-slate-200 outline-none transition-all placeholder:text-slate-400"
           />
           <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-1">
-            <span className="text-[10px] font-medium text-slate-400 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded px-1.5 py-0.5 shadow-[0_1px_2px_rgba(0,0,0,0.02)]">⌘K</span>
+            <span className="text-[10px] font-medium text-slate-400 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded px-1.5 py-0.5 shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
+              ⌘K
+            </span>
           </div>
 
           <AnimatePresence>
             {showSearch && searchTerm && (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 10 }}
                 className="absolute top-full left-0 mt-2 w-96 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl overflow-hidden z-50"
               >
                 {isLoading ? (
-                  <div className="p-4 text-center text-[12px] text-slate-500 animate-pulse">Searching...</div>
+                  <div className="p-4 text-center text-[12px] text-slate-500 animate-pulse">
+                    Searching...
+                  </div>
                 ) : searchResults?.length > 0 ? (
                   <div className="max-h-64 overflow-y-auto custom-scrollbar">
-                    {searchResults.map(patient => (
-                      <button 
+                    {searchResults.map((patient) => (
+                      <button
                         key={patient.id}
                         onClick={() => handleResultClick(patient.id)}
                         className="w-full text-left p-3 hover:bg-slate-50 dark:hover:bg-slate-700 border-b border-slate-50 dark:border-slate-700 flex items-center gap-3 transition-colors outline-none"
@@ -85,23 +91,29 @@ const Navbar = () => {
                           {patient.name.charAt(0)}
                         </div>
                         <div>
-                          <p className="text-[13px] font-semibold text-slate-800 dark:text-slate-200">{patient.name}</p>
-                          <p className="text-[11px] text-slate-500 font-mono">ID: {patient.id.substring(0,8)}...</p>
+                          <p className="text-[13px] font-semibold text-slate-800 dark:text-slate-200">
+                            {patient.name}
+                          </p>
+                          <p className="text-[11px] text-slate-500 font-mono">
+                            ID: {patient.id.substring(0, 8)}...
+                          </p>
                         </div>
                       </button>
                     ))}
                   </div>
                 ) : (
-                  <div className="p-4 text-center text-[12px] text-slate-500">No patients found.</div>
+                  <div className="p-4 text-center text-[12px] text-slate-500">
+                    No patients found.
+                  </div>
                 )}
               </motion.div>
             )}
           </AnimatePresence>
         </div>
-        
+
         {/* Mobile date fallback */}
         <p className="text-[13px] font-medium text-slate-500 sm:hidden">
-          {format(new Date(), 'dd MMM yyyy')}
+          {format(new Date(), "dd MMM yyyy")}
         </p>
       </div>
 
@@ -109,22 +121,29 @@ const Navbar = () => {
         {/* Accessibility Typography Resizer */}
         <FontController />
         <div className="relative" ref={notifRef}>
-          <button onClick={() => setShowNotifications(!showNotifications)} className="w-9 h-9 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-50 dark:hover:text-slate-200 dark:hover:bg-slate-700 transition-colors relative outline-none">
+          <button
+            onClick={() => setShowNotifications(!showNotifications)}
+            className="w-9 h-9 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-50 dark:hover:text-slate-200 dark:hover:bg-slate-700 transition-colors relative outline-none"
+          >
             <Bell className="w-4 h-4" />
             <span className="absolute top-2 right-2.5 w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse"></span>
           </button>
-          
+
           <AnimatePresence>
             {showNotifications && (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: 10, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 10, scale: 0.95 }}
                 className="absolute top-full right-0 mt-2 w-80 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl overflow-hidden z-50"
               >
                 <div className="p-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50">
-                  <h3 className="text-[13px] font-bold text-slate-800 dark:text-slate-200">Notifications</h3>
-                  <button className="text-[11px] font-medium text-rose-600 hover:text-rose-700 outline-none">Mark all read</button>
+                  <h3 className="text-[13px] font-bold text-slate-800 dark:text-slate-200">
+                    Notifications
+                  </h3>
+                  <button className="text-[11px] font-medium text-rose-600 hover:text-rose-700 outline-none">
+                    Mark all read
+                  </button>
                 </div>
                 <div className="max-h-80 overflow-y-auto custom-scrollbar p-2">
                   <div className="p-3 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-xl transition-colors cursor-pointer flex gap-3 mb-1">
@@ -132,8 +151,13 @@ const Navbar = () => {
                       <AlertCircle className="w-4 h-4 text-amber-500" />
                     </div>
                     <div>
-                      <p className="text-[12px] text-slate-800 dark:text-slate-200"><span className="font-bold">Budi Santoso</span> has high blood pressure reading (160/95).</p>
-                      <p className="text-[10px] text-slate-400 mt-1">10 minutes ago</p>
+                      <p className="text-[12px] text-slate-800 dark:text-slate-200">
+                        <span className="font-bold">Budi Santoso</span> has high
+                        blood pressure reading (160/95).
+                      </p>
+                      <p className="text-[10px] text-slate-400 mt-1">
+                        10 minutes ago
+                      </p>
                     </div>
                   </div>
                   <div className="p-3 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-xl transition-colors cursor-pointer flex gap-3">
@@ -141,8 +165,14 @@ const Navbar = () => {
                       <User className="w-4 h-4 text-blue-500" />
                     </div>
                     <div>
-                      <p className="text-[12px] text-slate-800 dark:text-slate-200">New patient <span className="font-bold">Siti Aminah</span> registered.</p>
-                      <p className="text-[10px] text-slate-400 mt-1">2 hours ago</p>
+                      <p className="text-[12px] text-slate-800 dark:text-slate-200">
+                        New patient{" "}
+                        <span className="font-bold">Siti Aminah</span>{" "}
+                        registered.
+                      </p>
+                      <p className="text-[10px] text-slate-400 mt-1">
+                        2 hours ago
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -152,10 +182,17 @@ const Navbar = () => {
         </div>
 
         <div className="h-5 w-px bg-slate-200 dark:bg-slate-700 mx-1 hidden sm:block"></div>
-        <Link to="/settings" className="flex items-center space-x-3 cursor-pointer group pl-1 outline-none">
+        <Link
+          to="/settings"
+          className="flex items-center space-x-3 cursor-pointer group pl-1 outline-none"
+        >
           <div className="text-right hidden sm:block">
-            <p className="text-[13px] font-semibold text-slate-800 dark:text-slate-200 leading-tight group-hover:text-rose-600 transition-colors">{user?.name || 'Administrator'}</p>
-            <p className="text-[11px] font-medium text-slate-400">{user?.role?.replace('_', ' ') || 'SYSTEM ADMIN'}</p>
+            <p className="text-[13px] font-semibold text-slate-800 dark:text-slate-200 leading-tight group-hover:text-rose-600 transition-colors">
+              {user?.name || "Administrator"}
+            </p>
+            <p className="text-[11px] font-medium text-slate-400">
+              {user?.role?.replace("_", " ") || "SYSTEM ADMIN"}
+            </p>
           </div>
           <div className="w-9 h-9 rounded-full bg-rose-50 dark:bg-rose-900/30 flex items-center justify-center text-rose-600 shadow-sm border border-rose-100 dark:border-rose-800 group-hover:shadow-md transition-all">
             <User className="w-4 h-4" />
